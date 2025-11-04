@@ -7,75 +7,71 @@ import { PostComplaintDialog } from '@/components/PostComplaintDialog';
 import { MessageCircle, TrendingUp, CheckCircle, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ThemeToggle } from '@/components/ThemeToggle';
-
 export default function Dashboard() {
-  const { user, profile, loading } = useAuth();
+  const {
+    user,
+    profile,
+    loading
+  } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     total: 0,
     inProgress: 0,
-    resolved: 0,
+    resolved: 0
   });
-
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
-
   useEffect(() => {
     if (profile) {
       loadStats();
     }
   }, [profile]);
-
   const loadStats = async () => {
     try {
-      const { count: totalCount } = await supabase
-        .from('complaints')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: inProgressCount } = await supabase
-        .from('complaints')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'in_progress');
-
-      const { count: resolvedCount } = await supabase
-        .from('complaints')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'resolved');
-
+      const {
+        count: totalCount
+      } = await supabase.from('complaints').select('*', {
+        count: 'exact',
+        head: true
+      });
+      const {
+        count: inProgressCount
+      } = await supabase.from('complaints').select('*', {
+        count: 'exact',
+        head: true
+      }).eq('status', 'in_progress');
+      const {
+        count: resolvedCount
+      } = await supabase.from('complaints').select('*', {
+        count: 'exact',
+        head: true
+      }).eq('status', 'resolved');
       setStats({
         total: totalCount || 0,
         inProgress: inProgressCount || 0,
-        resolved: resolvedCount || 0,
+        resolved: resolvedCount || 0
       });
     } catch (error) {
       console.error('Error loading stats:', error);
     }
   };
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/auth');
   };
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
+    return <div className="min-h-screen flex items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-primary">
-              Query – The VIT-AP Complaint Forum
-            </h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-primary">Quirii – The VIT-AP Complaint Forum</h1>
             <p className="text-sm md:text-base text-muted-foreground mt-1">Speak. Share. Solve.</p>
             <p className="text-xs text-muted-foreground">Every Query Deserves an Answer.</p>
           </div>
@@ -134,6 +130,5 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </main>
-    </div>
-  );
+    </div>;
 }
