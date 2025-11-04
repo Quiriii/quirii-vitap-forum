@@ -21,6 +21,7 @@ export function getHostelFromRegNumber(regNumber: string): string | null {
   return HOSTEL_MAPPING[regNumber] || null;
 }
 
-export function canAccessCategory(userHostel: string, category: string): boolean {
+export function canAccessCategory(userHostel: string | undefined, category: string, isAdmin: boolean = false): boolean {
+  if (isAdmin) return true;
   return category === userHostel || COMMON_SECTIONS.includes(category);
 }

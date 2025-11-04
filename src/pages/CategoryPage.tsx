@@ -13,7 +13,7 @@ type SortOption = 'recent' | 'popular';
 
 export default function CategoryPage() {
   const { category } = useParams<{ category: string }>();
-  const { profile, loading } = useAuth();
+  const { profile, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [complaints, setComplaints] = useState<any[]>([]);
   const [userVotes, setUserVotes] = useState<Record<string, 'up' | 'down'>>({});
@@ -21,15 +21,17 @@ export default function CategoryPage() {
   const [sortBy, setSortBy] = useState<SortOption>('recent');
 
   useEffect(() => {
-    if (!loading && profile && category) {
-      if (!canAccessCategory(profile.hostel, category)) {
+    if (!loading && category) {
+      if (!isAdmin && profile && !canAccessCategory(profile.hostel, category, isAdmin)) {
         // Show access denied
         return;
       }
       loadComplaints();
-      loadUserVotes();
+      if (profile) {
+        loadUserVotes();
+      }
     }
-  }, [profile, category, loading, sortBy]);
+  }, [profile, category, loading, sortBy, isAdmin]);
 
   const loadComplaints = async () => {
     if (!category) return;
@@ -91,10 +93,16 @@ export default function CategoryPage() {
   }
 
   if (!profile || !category) {
-    return null;
+    // Admin doesn't need a profile
+    if (!isAdmin && !profile) {
+      return null;
+    }
+    if (!category) {
+      return null;
+    }
   }
 
-  if (!canAccessCategory(profile.hostel, category)) {
+  if (!isAdmin && profile && !canAccessCategory(profile.hostel, category, isAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center space-y-4">

@@ -20,7 +20,7 @@ const complaintSchema = z.object({
 });
 
 export function PostComplaintDialog() {
-  const { user, profile } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   
@@ -49,15 +49,16 @@ export function PostComplaintDialog() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !profile) return;
+    if (!user) return;
+    if (!isAdmin && !profile) return;
 
     setLoading(true);
     try {
       // Validate
       const validated = complaintSchema.parse({ title, description, category });
 
-      // Check access
-      if (!canAccessCategory(profile.hostel, validated.category)) {
+      // Check access (skip for admin)
+      if (!isAdmin && profile && !canAccessCategory(profile.hostel, validated.category, isAdmin)) {
         toast.error('You do not have access to post in this category');
         setLoading(false);
         return;
@@ -119,7 +120,7 @@ export function PostComplaintDialog() {
   };
 
   const accessibleCategories = ALL_CATEGORIES.filter(cat => 
-    profile ? canAccessCategory(profile.hostel, cat) : false
+    isAdmin || (profile ? canAccessCategory(profile.hostel, cat, isAdmin) : false)
   );
 
   return (

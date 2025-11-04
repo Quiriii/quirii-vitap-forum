@@ -8,16 +8,12 @@ import { MessageCircle, TrendingUp, CheckCircle, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ThemeToggle } from '@/components/ThemeToggle';
 export default function Dashboard() {
-  const {
-    user,
-    profile,
-    loading
-  } = useAuth();
+  const { user, profile, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     total: 0,
     inProgress: 0,
-    resolved: 0
+    resolved: 0,
   });
   useEffect(() => {
     if (!loading && !user) {
@@ -67,13 +63,19 @@ export default function Dashboard() {
         <p className="text-muted-foreground">Loading...</p>
       </div>;
   }
-  return <div className="min-h-screen bg-background">
+  return (
+    <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-primary">Quirii – The VIT-AP Complaint Forum</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-primary">
+              Quirii – The VIT-AP Complaint Forum
+            </h1>
             <p className="text-sm md:text-base text-muted-foreground mt-1">Speak. Share. Solve.</p>
             <p className="text-xs text-muted-foreground">Every Query Deserves an Answer.</p>
+            {isAdmin && (
+              <p className="text-xs text-primary font-semibold mt-1">🛡️ Admin Access</p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -130,5 +132,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </main>
-    </div>;
+    </div>
+  );
 }

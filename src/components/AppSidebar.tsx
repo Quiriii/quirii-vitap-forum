@@ -4,16 +4,15 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGrou
 import { useAuth } from '@/contexts/AuthContext';
 import { LADIES_HOSTELS, MENS_HOSTELS, COMMON_SECTIONS } from '@/lib/hostelMapping';
 export function AppSidebar() {
-  const {
-    profile
-  } = useAuth();
-  const getNavClassName = ({
+  const { profile, isAdmin } = useAuth();
+  
+  const getNavClassName = ({ isActive }: { isActive: boolean }) =>
     isActive
-  }: {
-    isActive: boolean;
-  }) => isActive ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : 'hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground';
+      ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+      : 'hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground';
+  
   const canAccessHostel = (hostel: string) => {
-    return profile?.hostel === hostel;
+    return isAdmin || profile?.hostel === hostel;
   };
   return <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4 border-b border-sidebar-border">

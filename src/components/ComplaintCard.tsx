@@ -3,10 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ThumbsUp, ThumbsDown, Clock, CheckCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { AdminReplySection } from './AdminReplySection';
 
 interface ComplaintCardProps {
   complaint: {
@@ -29,8 +30,31 @@ interface ComplaintCardProps {
 }
 
 export function ComplaintCard({ complaint, userVote, onVoteChange }: ComplaintCardProps) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [voting, setVoting] = useState(false);
+  const [replies, setReplies] = useState<any[]>([]);
+  const [loadingReplies, setLoadingReplies] = useState(true);
+
+  useEffect(() => {
+    fetchReplies();
+  }, [complaint.id]);
+
+  const fetchReplies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('complaint_replies')
+        .select('*')
+        .eq('complaint_id', complaint.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setReplies(data || []);
+    } catch (error) {
+      console.error('Error fetching replies:', error);
+    } finally {
+      setLoadingReplies(false);
+    }
+  };
 
   const handleVote = async (voteType: 'up' | 'down') => {
     if (!user) {
@@ -122,27 +146,57 @@ export function ComplaintCard({ complaint, userVote, onVoteChange }: ComplaintCa
           />
         )}
       </CardContent>
-      <CardFooter className="flex items-center gap-2">
-        <Button
-          variant={userVote === 'up' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => handleVote('up')}
-          disabled={voting}
-          className="gap-1"
-        >
-          <ThumbsUp className="h-4 w-4" />
-          {complaint.upvotes}
-        </Button>
-        <Button
-          variant={userVote === 'down' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => handleVote('down')}
-          disabled={voting}
-          className="gap-1"
-        >
-          <ThumbsDown className="h-4 w-4" />
-          {complaint.downvotes}
-        </Button>
+      <CardFooter className="flex flex-col items-start gap-4">
+        <div className="flex items-center gap-2 w-full">
+          <Button
+            variant={userVote === 'up' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleVote('up')}
+            disabled={voting}
+            className="gap-1"
+          >
+            <ThumbsUp className="h-4 w-4" />
+            {complaint.upvotes}
+          </Button>
+          <Button
+            variant={userVote === 'down' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleVote('down')}
+            disabled={voting}
+            className="gap-1"
+          >
+            <ThumbsDown className="h-4 w-4" />
+            {complaint.downvotes}
+          </Button>
+        </div>
+
+        {/* Show public replies to all users */}
+        {!loadingReplies && replies.length > 0 && !isAdmin && (
+          <div className="w-full space-y-2 pt-4 border-t">
+            <h5 className="text-sm font-medium">Admin Replies</h5>
+            {replies.map((reply) => (
+              <Card key={reply.id} className="p-3 bg-muted/50">
+                <p className="text-sm text-foreground">{reply.reply_text}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Admin • {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
+                </p>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Admin actions section */}
+        {isAdmin && (
+          <AdminReplySection
+            complaintId={complaint.id}
+            currentStatus={complaint.status}
+            replies={replies}
+            onUpdate={() => {
+              fetchReplies();
+              onVoteChange?.();
+            }}
+          />
+        )}
       </CardFooter>
     </Card>
   );
